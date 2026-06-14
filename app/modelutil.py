@@ -1,4 +1,8 @@
+"""Build the LipNet architecture and load trained weights."""
+
 import os
+from typing import Optional
+
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import (
     Conv3D,
@@ -12,41 +16,60 @@ from tensorflow.keras.layers import (
     Flatten,
 )
 
-def load_model(model_path="/Users/tejasredkar/Developer/LipReader/app/checkpoints1.weights.h5") -> Sequential:
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model file not found at {model_path}")
+import config
 
-    # Initialize the model
+
+def build_model() -> Sequential:
+    """Construct the (untrained) LipNet model architecture."""
     model = Sequential()
 
-    # First Conv3D Block
-    model.add(Conv3D(filters=128, kernel_size=(3, 3, 3), input_shape=(75, 46, 140, 1), padding="same"))
+    input_shape = (config.FRAME_COUNT, config.FRAME_HEIGHT, config.FRAME_WIDTH, 1)
+    model.add(Conv3D(128, 3, input_shape=input_shape, padding="same"))
     model.add(Activation("relu"))
-    model.add(MaxPool3D(pool_size=(1, 2, 2)))
+    model.add(MaxPool3D((1, 2, 2)))
 
-    # Second Conv3D Block
-    model.add(Conv3D(filters=256, kernel_size=(3, 3, 3), padding="same"))
+    model.add(Conv3D(256, 3, padding="same"))
     model.add(Activation("relu"))
-    model.add(MaxPool3D(pool_size=(1, 2, 2)))
+    model.add(MaxPool3D((1, 2, 2)))
 
-    # Third Conv3D Block
-    model.add(Conv3D(filters=75, kernel_size=(3, 3, 3), padding="same"))
+    model.add(Conv3D(75, 3, padding="same"))
     model.add(Activation("relu"))
-    model.add(MaxPool3D(pool_size=(1, 2, 2)))
+    model.add(MaxPool3D((1, 2, 2)))
 
-    # Flatten layer wrapped in TimeDistributed for 3D data
     model.add(TimeDistributed(Flatten()))
 
-    # Bidirectional LSTM layers
-    model.add(Bidirectional(LSTM(units=128, kernel_initializer="orthogonal", return_sequences=True)))
+    model.add(Bidirectional(LSTM(128, kernel_initializer="orthogonal", return_sequences=True)))
     model.add(Dropout(0.5))
 
-    model.add(Bidirectional(LSTM(units=128, kernel_initializer="orthogonal", return_sequences=True)))
+    model.add(Bidirectional(LSTM(128, kernel_initializer="orthogonal", return_sequences=True)))
     model.add(Dropout(0.5))
 
-    # Dense output layer
-    model.add(Dense(units=41, kernel_initializer="he_normal", activation="softmax"))
+    model.add(Dense(config.NUM_CLASSES, kernel_initializer="he_normal", activation="softmax"))
+    return model
 
-    # Load weights from the provided model.h5 file
-    model.load_weights(model_path)
+
+def _weights_exist(model_path: str) -> bool:
+    """True for both an .h5 file and a TF-checkpoint prefix (foo -> foo.index)."""
+    return os.path.exists(model_path) or os.path.exists(model_path + ".index")
+
+
+def load_model(model_path: Optional[str] = None) -> Sequential:
+    """Build the architecture and load trained weights.
+
+    Accepts either an `.h5` weights file or a TF-checkpoint prefix, and falls
+    back to the path resolved in `config.MODEL_PATH` when none is given.
+    """
+    if model_path is None:
+        model_path = config.MODEL_PATH
+    if model_path is None or not _weights_exist(str(model_path)):
+        raise FileNotFoundError(
+            f"Model weights not found (looked at: {model_path}). "
+            "Run `python app/download_weights.py` or set LIPREADER_MODEL_PATH."
+        )
+
+    model = build_model()
+    status = model.load_weights(str(model_path))
+    # TF checkpoints return a status object; ignore unrestored optimizer state.
+    if status is not None:
+        status.expect_partial()
     return model

@@ -1,84 +1,147 @@
-import streamlit as st
-import os
+"""LipReader / LipBuddy — Streamlit demo.
+
+Two tabs:
+  * GRID samples — run the trained model on the dataset it was trained on.
+  * Upload your own — detect the mouth in any video and attempt to read it.
+
+Paths and model dims are resolved in `config.py`.
+"""
+
+import subprocess
+import tempfile
+from pathlib import Path
+
 import imageio
 import numpy as np
+import streamlit as st
 import tensorflow as tf
-from utils import load_data, num_to_char
 
-st.set_page_config(layout='wide')
+import config
+from modelutil import load_model
+from utils import load_sample, num_to_char
 
-# Sidebar content
+st.set_page_config(page_title="LipBuddy", layout="wide")
+
+
+@st.cache_resource
+def get_model():
+    """Load the model once and cache it across reruns."""
+    return load_model()
+
+
+def frames_to_gif(video: tf.Tensor, path: str, fps: int = 10) -> None:
+    """Render the preprocessed (grayscale, normalized) frames to a GIF."""
+    frames = video.numpy()
+    frames = frames - frames.min()
+    frames = (frames / (frames.max() + 1e-8) * 255).astype(np.uint8)
+    if frames.ndim == 4 and frames.shape[-1] == 1:
+        frames = np.repeat(frames, 3, axis=-1)
+    imageio.mimsave(path, frames, fps=fps)
+
+
+def transcode_to_mp4(src: str) -> bytes:
+    """Re-encode a video to browser-playable H.264 mp4 and return its bytes."""
+    out_path = Path(tempfile.gettempdir()) / "lipreader_preview.mp4"
+    subprocess.run(
+        ["ffmpeg", "-i", src, "-vcodec", "libx264", "-y", str(out_path)],
+        check=True,
+        capture_output=True,
+    )
+    return out_path.read_bytes()
+
+
+def predict(video: tf.Tensor) -> str:
+    """Run the model on a single video tensor and decode to text."""
+    model = get_model()
+    yhat = model.predict(tf.expand_dims(video, axis=0), verbose=0)
+    decoded = tf.keras.backend.ctc_decode(
+        yhat, input_length=[yhat.shape[1]], greedy=True
+    )[0][0].numpy()
+    return tf.strings.reduce_join(num_to_char(decoded)).numpy().decode("utf-8")
+
+
+def show_prediction(video: tf.Tensor, gif_name: str) -> None:
+    """Shared right-column view: mouth GIF + decoded text."""
+    st.info("What the model sees (cropped, grayscale, normalized)")
+    gif_path = Path(tempfile.gettempdir()) / gif_name
+    frames_to_gif(video, str(gif_path))
+    st.image(str(gif_path), width=400)
+
+    if not config.MODEL_PATH:
+        st.warning("Model weights unavailable — run `python app/download_weights.py`.")
+        return
+    with st.spinner("Reading lips…"):
+        prediction = predict(video)
+    st.subheader("Prediction")
+    st.success(prediction if prediction.strip() else "(no text decoded)")
+
+
+# --- Sidebar --------------------------------------------------------------
 with st.sidebar:
-    st.image('https://www.onepointltd.com/wp-content/uploads/2020/03/inno2.png')
-    st.title('LipBuddy - Application that reads lips')
-    st.info('This application is originally developed from the LipNet deep learning model.')
+    st.title("LipBuddy")
+    st.info("A deep-learning lip-reading demo based on the LipNet model.")
+    if config.MODEL_PATH:
+        st.success("Model weights loaded.")
+    else:
+        st.error("No model weights found. Run `python app/download_weights.py`.")
 
-st.title('LipBuddy')
+st.title("LipBuddy — reading lips from video")
 
-# Define the correct paths
-base_path = os.path.abspath(os.path.join('..'))  # Move one level up from the 'app' folder
-data_path = os.path.join(base_path, 'data', 's1')  # Path to the data folder
-model_path = os.path.join(base_path, 'checkpoints1.weights.h5')  # Path to the model file
+tab_grid, tab_upload = st.tabs(["GRID samples", "Upload your own"])
 
-# Load available video options
-if os.path.exists(data_path):
-    options = os.listdir(data_path)
-    selected_video = st.selectbox('Choose video', options)
-else:
-    st.error(f"Data path not found: {data_path}")
-    options = []
-
-col1, col2 = st.columns(2)
-
-if options: 
-    # Column 1: Render original video
-    with col1: 
-        st.info('The video below displays the converted video in mp4 format')
-        file_path = os.path.join(data_path, selected_video)
-        if os.path.exists(file_path):
-            os.system(f'ffmpeg -i {file_path} -vcodec libx264 test_video.mp4 -y')
-
-            # Rendering video inside the app
-            with open('test_video.mp4', 'rb') as video:
-                video_bytes = video.read() 
-                st.video(video_bytes)
+# --- Tab 1: GRID sample demo ---------------------------------------------
+with tab_grid:
+    if not config.VIDEO_DIR.exists():
+        st.error(
+            f"Data directory not found: {config.VIDEO_DIR}\n\n"
+            "Set LIPREADER_DATA_DIR to the folder containing `s1/`."
+        )
+    else:
+        options = sorted(p.name for p in config.VIDEO_DIR.glob("*.mpg"))
+        if not options:
+            st.error(f"No .mpg videos found in {config.VIDEO_DIR}")
         else:
-            st.error(f"Video file not found: {file_path}")
+            selected_video = st.selectbox("Choose a sample video", options)
+            file_path = config.VIDEO_DIR / selected_video
+            col1, col2 = st.columns(2)
+            with col1:
+                st.info("Original video")
+                try:
+                    st.video(transcode_to_mp4(str(file_path)))
+                except subprocess.CalledProcessError:
+                    st.error("ffmpeg failed to transcode this video.")
+            with col2:
+                video, _ = load_sample(selected_video)
+                show_prediction(video, "grid_frames.gif")
 
-    # Column 2: Display processed frames and predictions
-    with col2: 
-        if os.path.exists(file_path):
-            st.info('This is all the machine learning model sees when making a prediction')
-            video, annotations = load_data(tf.convert_to_tensor(file_path))
+# --- Tab 2: Upload your own ----------------------------------------------
+with tab_upload:
+    st.warning(
+        "⚠️ This model was trained on a **single speaker** (GRID corpus), so "
+        "accuracy on arbitrary videos is limited — expect the opening words to "
+        "land and the rest to drift. Best results: a clear, front-facing clip of "
+        "a few seconds. This demonstrates the full detect→crop→read pipeline."
+    )
+    uploaded = st.file_uploader(
+        "Upload a video", type=["mp4", "mov", "avi", "mpg", "mpeg", "webm"]
+    )
+    if uploaded is not None:
+        suffix = Path(uploaded.name).suffix or ".mp4"
+        tmp = Path(tempfile.gettempdir()) / f"lipreader_upload{suffix}"
+        tmp.write_bytes(uploaded.getbuffer())
 
-            # Process video frames for animation
-            frames = (video.numpy() * 255).astype(np.uint8)  # Scale to [0, 255]
-            if frames.ndim == 4 and frames.shape[-1] == 1:  # Handle single-channel frames
-                frames = np.repeat(frames, 3, axis=-1)  # Convert grayscale to RGB
-            
-            # Save frames as an animation
-            animation_path = 'animation.gif'
-            imageio.mimsave(animation_path, frames, fps=10)
-            st.image(animation_path, width=400)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info("Your video")
+            st.video(uploaded)
+        with col2:
+            try:
+                from mouth import extract_mouth_frames
 
-            # Load and import the model
-            if os.path.exists(model_path):
-                model = tf.keras.models.load_model(model_path)
-                st.info('Model loaded successfully!')
-            else:
-                st.error(f"Model file not found: {model_path}")
-                model = None
-
-            if model:
-                # Display raw model predictions
-                st.info('This is the output of the machine learning model as tokens')
-                yhat = model.predict(tf.expand_dims(video, axis=0))
-                decoder = tf.keras.backend.ctc_decode(yhat, [75], greedy=True)[0][0].numpy()
-                st.text(decoder)
-
-                # Convert raw predictions to readable text
-                st.info('Decode the raw tokens into words')
-                converted_prediction = tf.strings.reduce_join(num_to_char(decoder)).numpy().decode('utf-8')
-                st.text(converted_prediction)
-        else:
-            st.error(f"Unable to process video file: {file_path}")
+                with st.spinner("Detecting mouth…"):
+                    video = extract_mouth_frames(str(tmp))
+                show_prediction(video, "upload_frames.gif")
+            except ValueError as e:
+                st.error(str(e))
+            except Exception as e:  # noqa: BLE001 — surface any pipeline failure
+                st.error(f"Could not process video: {e}")

@@ -1,0 +1,21 @@
+# LipReader dependencies — pinned for Apple Silicon (macOS, Python 3.10).
+# On non-Mac platforms, replace tensorflow-macos/tensorflow-metal with:
+#   tensorflow==2.13.0
+
+# numpy 1.26.4 is required by mediapipe. TF 2.13 declares numpy<=1.24.3 but
+# works fine with 1.26.4 in practice (inference verified).
+numpy==1.26.4
+tensorflow-macos==2.13.0
+tensorflow-metal==1.0.1
+
+# opencv-contrib-python is a superset of opencv-python and is what mediapipe
+# pulls in. Install only one opencv package to avoid a broken cv2 module.
+opencv-contrib-python==4.11.0.86
+mediapipe==0.10.14
+
+streamlit==1.31.1
+imageio==2.31.6
+matplotlib==3.7.5
+
+# Used by download_weights.py and the training notebook.
+gdown==5.1.0
