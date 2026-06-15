@@ -8,3 +8,15 @@
 /models
 /checkpoints.zip
 /data.zip
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json
+
+# Python environment / caches
+.venv/
+__pycache__/
+*.pyc
+
+# App scratch files
+/app/test_video.mp4
+/app/animation.gif
