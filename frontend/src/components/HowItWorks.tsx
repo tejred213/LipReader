@@ -46,7 +46,7 @@ const STEPS: Step[] = [
 
 export default function HowItWorks() {
   return (
-    <section id="how" className="relative py-20 sm:py-28">
+    <section id="how" className="relative scroll-mt-16 py-20 sm:py-28">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 12 }}

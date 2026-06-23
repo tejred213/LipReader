@@ -12,7 +12,12 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "webcam", label: "Webcam" },
 ];
 
-export default function Demo() {
+interface DemoProps {
+  /** Hide the marketing eyebrow/heading when used as the app's own view. */
+  showHeading?: boolean;
+}
+
+export default function Demo({ showHeading = true }: DemoProps) {
   const [tab, setTab] = useState<TabKey>("upload");
   const [result, setResult] = useState<PredictResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,32 +45,34 @@ export default function Demo() {
   return (
     <section id="demo" className="relative py-20 sm:py-28 scroll-mt-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.45 }}
-          className="max-w-2xl"
-        >
-          <span className="eyebrow">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-            Live
-          </span>
-          <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
-            Try it. <span className="serif text-slate-500 dark:text-slate-400">Right here.</span>
-          </h2>
-          <p className="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-400">
-            Upload a short, front-facing clip — or record yourself with your camera —
-            and watch the model transcribe.
-          </p>
-        </motion.div>
+        {showHeading && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.45 }}
+            className="max-w-2xl"
+          >
+            <span className="eyebrow">
+              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+              Live
+            </span>
+            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+              Try it. <span className="serif text-slate-500 dark:text-slate-400">Right here.</span>
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-400">
+              Upload a short, front-facing clip — or record yourself with your camera —
+              and watch the model transcribe.
+            </p>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ duration: 0.55, delay: 0.05 }}
-          className="card-elevated mt-10 overflow-hidden p-4 sm:p-6"
+          className={`card-elevated overflow-hidden p-4 sm:p-6 ${showHeading ? "mt-10" : ""}`}
         >
           <div className="grid gap-6 lg:grid-cols-2">
             {/* INPUT */}

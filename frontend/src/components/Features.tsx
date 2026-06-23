@@ -51,7 +51,7 @@ const FEATURES: Feature[] = [
 
 export default function Features() {
   return (
-    <section className="relative py-20 sm:py-24">
+    <section id="features" className="relative scroll-mt-16 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}

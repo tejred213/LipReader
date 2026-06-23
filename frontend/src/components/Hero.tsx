@@ -1,5 +1,9 @@
 import { motion } from "framer-motion";
 
+interface HeroProps {
+  onEnterApp: () => void;
+}
+
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -84,9 +88,9 @@ function ResultCardMock() {
   );
 }
 
-export default function Hero() {
+export default function Hero({ onEnterApp }: HeroProps) {
   return (
-    <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28">
+    <section className="relative flex min-h-[92vh] flex-col justify-center pt-10 pb-16 sm:pt-16 sm:pb-20">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
         {/* LEFT — copy */}
         <div>
@@ -130,7 +134,7 @@ export default function Hero() {
             <motion.button
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => scrollTo("demo")}
+              onClick={onEnterApp}
               className="group inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-500/10 transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
             >
               Try the demo
@@ -172,6 +176,27 @@ export default function Hero() {
           <ResultCardMock />
         </div>
       </div>
+
+      {/* Scroll indicator at the bottom of the splash */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 1.2 }}
+        onClick={() => scrollTo("how")}
+        aria-label="Scroll to learn how it works"
+        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[10px] font-medium uppercase tracking-[0.2em] text-slate-500 transition hover:text-slate-900 sm:flex dark:text-slate-500 dark:hover:text-white"
+      >
+        <span>Scroll</span>
+        <motion.span
+          animate={{ y: [0, 5, 0] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          className="grid h-7 w-7 place-items-center rounded-full border border-slate-300/70 dark:border-white/15"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </motion.span>
+      </motion.button>
     </section>
   );
 }
