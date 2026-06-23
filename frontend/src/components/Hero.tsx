@@ -21,17 +21,31 @@ function ResultCardMock() {
       </div>
 
       <div className="mt-4 flex items-center gap-4">
-        {/* "Mouth crop" placeholder — three stacked frames, suggesting a clip */}
+        {/* Video clip placeholder — abstract "frame" with a play glyph. */}
         <div className="relative h-14 w-32 shrink-0 overflow-hidden rounded-md bg-gradient-to-br from-slate-700 to-slate-900 ring-1 ring-white/10">
-          <svg viewBox="0 0 128 56" className="absolute inset-0 h-full w-full" aria-hidden="true">
-            <defs>
-              <linearGradient id="mouthSheen" x1="0" x2="1">
-                <stop offset="0" stopColor="#cbd5e1" stopOpacity="0.85" />
-                <stop offset="1" stopColor="#94a3b8" stopOpacity="0.6" />
-              </linearGradient>
-            </defs>
-            <path d="M22 22 C 40 14, 56 14, 64 22 Q 64 26, 64 22 C 72 14, 88 14, 106 22 C 90 26, 78 27, 64 27 C 50 27, 38 26, 22 22 Z" fill="url(#mouthSheen)" />
-            <path d="M22 30 C 38 32, 50 33, 64 33 C 78 33, 90 32, 106 30 C 96 42, 80 47, 64 47 C 48 47, 32 42, 22 30 Z" fill="url(#mouthSheen)" />
+          {/* Subtle "scanline" texture */}
+          <div
+            className="absolute inset-0 opacity-25"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(180deg, rgba(255,255,255,0.10) 0 1px, transparent 1px 4px)",
+            }}
+          />
+          {/* Soft sky glow behind the play glyph */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 50%, rgba(56,189,248,0.22), transparent 60%)",
+            }}
+          />
+          <svg
+            viewBox="0 0 24 24"
+            className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 text-white/90"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M9 6.5v11l9-5.5z" />
           </svg>
         </div>
         <div className="min-w-0 flex-1">

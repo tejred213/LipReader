@@ -157,16 +157,6 @@ h1, h2, h3, h4 {
   animation: blink-caret 1s steps(1) infinite;
 }
 
-/* Subtle speaking-mouth animation for the hero logo. */
-@keyframes mouth-speak {
-  0%, 100% { transform: scaleY(1); }
-  50%      { transform: scaleY(0.7); }
-}
-.speak-anim {
-  transform-origin: 12px 14px;
-  animation: mouth-speak 1.8s ease-in-out infinite;
-}
-
 /* "Pill" links / nav. */
 .pill-link {
   @apply rounded-full px-3 py-1.5 text-sm font-medium transition;
