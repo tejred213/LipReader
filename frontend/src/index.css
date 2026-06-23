@@ -3,10 +3,11 @@
 /* Enable class-based dark mode (toggled by adding `.dark` to <html>). */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Wire the Google Fonts loaded in index.html into the Tailwind theme. */
+/* Wire Google Fonts into the Tailwind theme. */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
 }
 
@@ -23,41 +24,126 @@ body,
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01", "ss03"; /* refined Inter alternates */
+  font-feature-settings: "cv11", "ss01", "ss03";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* Display headings: tighter, more confident. */
-h1, h2, h3 {
+h1, h2, h3, h4 {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
 }
 
-/* Subtle gradient backdrop for the app shell. */
-.app-bg {
-  background:
-    radial-gradient(1100px 560px at 12% -12%, rgba(14, 165, 233, 0.10), transparent 60%),
-    radial-gradient(900px 480px at 110% 8%, rgba(6, 182, 212, 0.07), transparent 55%),
-    #f7f8fa;
-}
-.dark .app-bg {
-  background:
-    radial-gradient(1100px 560px at 12% -12%, rgba(14, 165, 233, 0.12), transparent 60%),
-    radial-gradient(900px 480px at 110% 8%, rgba(6, 182, 212, 0.08), transparent 55%),
-    #0a0c10;
+/* ---- Editorial serif accent ------------------------------------------- */
+.serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
-/* Frosted-glass card. */
+/* ---- Gradient text on a sky→cyan ramp --------------------------------- */
+.text-gradient {
+  background: linear-gradient(135deg, #38bdf8 0%, #22d3ee 50%, #a5f3fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---- App shell: animated mesh-gradient backdrop ----------------------- */
+/* Light fallback. */
+.app-bg { background: #f7f8fa; }
+.dark .app-bg { background: #06070b; }
+
+/* The mesh sits in a fixed full-viewport layer behind everything. */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.mesh-bg::before,
+.mesh-bg::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.mesh-bg::before {
+  width: 60vmax; height: 60vmax;
+  left: -20vmax; top: -20vmax;
+  background: radial-gradient(closest-side, #0ea5e9, transparent);
+  animation: mesh-drift-a 22s ease-in-out infinite alternate;
+}
+.mesh-bg::after {
+  width: 55vmax; height: 55vmax;
+  right: -20vmax; top: 10vmax;
+  background: radial-gradient(closest-side, #22d3ee, transparent);
+  animation: mesh-drift-b 28s ease-in-out infinite alternate;
+}
+.dark .mesh-bg::before { opacity: 0.30; }
+.dark .mesh-bg::after  { opacity: 0.22; }
+.light .mesh-bg::before { opacity: 0.30; }
+.light .mesh-bg::after  { opacity: 0.22; }
+
+@keyframes mesh-drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(8vw, 4vh, 0) scale(1.08); }
+}
+@keyframes mesh-drift-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-6vw, 6vh, 0) scale(1.05); }
+}
+
+/* Subtle grain over the mesh so the gradient never feels too "iOS wallpaper". */
+.mesh-bg .grain {
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 0.18 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+.dark .mesh-bg .grain { opacity: 0.07; }
+
+/* ---- Card surfaces ---------------------------------------------------- */
 .card {
   @apply rounded-2xl border shadow-sm backdrop-blur;
   @apply border-slate-200/70 bg-white/70;
 }
 .dark .card {
-  @apply border-white/10 bg-white/5;
+  @apply border-white/10 bg-white/[0.04];
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 30px 60px -30px rgba(0, 0, 0, 0.6);
 }
 
-/* Reusable "shimmer" caret cursor for the typing transcript. */
+/* Slightly elevated card (hero feature cards, demo container). */
+.card-elevated {
+  @apply rounded-3xl border;
+  @apply border-slate-200/70 bg-white/80;
+}
+.dark .card-elevated {
+  @apply border-white/10 bg-white/[0.04];
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 1px 0 0 rgba(255, 255, 255, 0.04),
+    0 40px 80px -30px rgba(0, 0, 0, 0.7),
+    0 20px 40px -20px rgba(14, 165, 233, 0.15);
+}
+
+/* Soft eyebrow tag (small label above section headings). */
+.eyebrow {
+  @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium;
+  @apply border-slate-200/80 bg-white/60 text-slate-600;
+}
+.dark .eyebrow {
+  @apply border-white/10 bg-white/[0.04] text-slate-300;
+}
+
+/* Reusable shimmering caret cursor for the typing transcript. */
 @keyframes blink-caret {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
@@ -69,4 +155,23 @@ h1, h2, h3 {
   margin-left: 0.1ch;
   border-bottom: 0.12em solid currentColor;
   animation: blink-caret 1s steps(1) infinite;
+}
+
+/* Subtle speaking-mouth animation for the hero logo. */
+@keyframes mouth-speak {
+  0%, 100% { transform: scaleY(1); }
+  50%      { transform: scaleY(0.7); }
+}
+.speak-anim {
+  transform-origin: 12px 14px;
+  animation: mouth-speak 1.8s ease-in-out infinite;
+}
+
+/* "Pill" links / nav. */
+.pill-link {
+  @apply rounded-full px-3 py-1.5 text-sm font-medium transition;
+  @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+}
+.dark .pill-link {
+  @apply text-slate-300 hover:bg-white/[0.06] hover:text-white;
 }

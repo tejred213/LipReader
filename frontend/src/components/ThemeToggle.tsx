@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 
 function getInitial(): boolean {
+  // Default to dark so first-time visitors see the editorial design.
   const saved = localStorage.getItem("theme");
   if (saved) return saved === "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return true;
 }
 
 export default function ThemeToggle() {
