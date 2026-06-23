@@ -2,17 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "lipreader",
-      "runtimeExecutable": ".venv/bin/streamlit",
-      "runtimeArgs": [
-        "run",
-        "app/app.py",
-        "--server.headless",
-        "true",
-        "--browser.gatherUsageStats",
-        "false"
-      ],
-      "port": 8501
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5173", "--strictPort"],
+      "port": 5173
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": ".venv-vsr/bin/uvicorn",
+      "runtimeArgs": ["--app-dir", "app", "api:app", "--port", "8000"],
+      "port": 8000
     }
   ]
 }

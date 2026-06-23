@@ -14,8 +14,12 @@
 
 # Python environment / caches
 .venv/
+.venv-vsr/
 __pycache__/
 *.pyc
+
+# VSR model weights (large; fetched via app/download_vsr_weights.py)
+/vsr/benchmarks/
 
 # App scratch files
 /app/test_video.mp4

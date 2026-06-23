@@ -1,21 +1,27 @@
-# LipReader dependencies — pinned for Apple Silicon (macOS, Python 3.10).
-# On non-Mac platforms, replace tensorflow-macos/tensorflow-metal with:
-#   tensorflow==2.13.0
+# LipReader backend dependencies (open-vocabulary VSR engine).
+# Python 3.10. CPU inference works fine — no GPU required.
+# Install into a dedicated venv:  python3.10 -m venv .venv-vsr
+#                                 .venv-vsr/bin/pip install -r requirements.txt
 
-# numpy 1.26.4 is required by mediapipe. TF 2.13 declares numpy<=1.24.3 but
-# works fine with 1.26.4 in practice (inference verified).
+# --- Deep learning (Auto-AVSR / espnet, vendored under vsr/) ---
+torch==2.12.1
+torchvision==0.27.1
+torchaudio==2.11.0
+sentencepiece==0.2.1
+
+# --- Face / mouth detection + video IO ---
+# numpy pinned <2 for mediapipe 0.10.14 compatibility.
 numpy==1.26.4
-tensorflow-macos==2.13.0
-tensorflow-metal==1.0.1
-
-# opencv-contrib-python is a superset of opencv-python and is what mediapipe
-# pulls in. Install only one opencv package to avoid a broken cv2 module.
-opencv-contrib-python==4.11.0.86
 mediapipe==0.10.14
+opencv-contrib-python==4.11.0.86
+scipy==1.15.3
+scikit-image==0.25.2
+av==17.1.0
+imageio==2.37.3
+hydra-core==1.3.3
 
-streamlit==1.31.1
-imageio==2.31.6
-matplotlib==3.7.5
-
-# Used by download_weights.py and the training notebook.
-gdown==5.1.0
+# --- API / weights download ---
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+huggingface_hub==1.20.1
