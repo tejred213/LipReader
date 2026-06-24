@@ -3,9 +3,16 @@
 Open-vocabulary visual speech recognition (Auto-AVSR / LRS3) behind a small
 HTTP API the React frontend talks to. Runs on CPU in the torch venv (.venv-vsr).
 
-Run:  uvicorn api:app --reload --port 8000      (from the app/ directory)
+Local dev:
+    uvicorn api:app --reload --port 8000      (from the app/ directory)
+
+Production (Docker / HF Spaces):
+    The same process serves both the API (/api/*) and the built SPA
+    (`frontend/dist`) — single origin, no CORS needed. Port comes from the
+    PORT env var (default 7860 on Hugging Face Spaces).
 """
 
+import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -20,9 +27,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 
 app = FastAPI(title="LipReader API")
 
+# Allowed CORS origins. The SPA in production is served from the SAME origin
+# as the API, so CORS is a no-op there. In local dev the Vite dev server runs
+# on :5173 and needs to be allowed. Override via env for custom deploys.
+_DEFAULT_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+_ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("LIPREADER_ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
+    if o.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
