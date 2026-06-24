@@ -1,0 +1,50 @@
+# Keep the Docker build context as small as possible. Anything excluded here
+# is never sent to the daemon, regardless of what the Dockerfile COPYs.
+
+# Local Python virtual environments
+.venv/
+.venv-vsr/
+
+# Frontend dev artifacts — stage 1 builds dist fresh
+frontend/node_modules/
+frontend/dist/
+
+# VCS + agent state
+.git/
+.gitignore
+.gitattributes
+.github/
+.claude/
+.cursor/
+.vscode/
+.idea/
+
+# Local data + weights (not committed anyway, but be defensive)
+data/
+models/
+vsr/benchmarks/
+
+# Python caches
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Notebook artifacts + the training notebook
+*.ipynb_checkpoints/
+LipNet.ipynb
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Misc large assets that aren't needed in the image
+animation.gif
+*.zip
+*.tar
+*.tar.gz

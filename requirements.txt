@@ -20,8 +20,7 @@ av==17.1.0
 imageio==2.37.3
 hydra-core==1.3.3
 
-# --- API / weights download ---
+# --- API ---
 fastapi==0.110.0
 uvicorn[standard]==0.27.1
 python-multipart==0.0.9
-huggingface_hub==1.20.1
