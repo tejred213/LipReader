@@ -3,6 +3,13 @@
 /* Enable class-based dark mode (toggled by adding `.dark` to <html>). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Wire the Google Fonts loaded in index.html into the Tailwind theme. */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
+}
+
 :root {
   color-scheme: light dark;
 }
@@ -15,8 +22,16 @@ body,
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01", "ss03"; /* refined Inter alternates */
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display headings: tighter, more confident. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 /* Subtle gradient backdrop for the app shell. */
@@ -42,10 +57,16 @@ body {
   @apply border-white/10 bg-white/5;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Reusable "shimmer" caret cursor for the typing transcript. */
+@keyframes blink-caret {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
-.animate-fade-in {
-  animation: fade-in 0.35s ease-out both;
+.caret::after {
+  content: "";
+  display: inline-block;
+  width: 0.5ch;
+  margin-left: 0.1ch;
+  border-bottom: 0.12em solid currentColor;
+  animation: blink-caret 1s steps(1) infinite;
 }
