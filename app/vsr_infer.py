@@ -11,6 +11,7 @@ import base64
 import io
 import math
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -58,11 +59,27 @@ def _install_read_video_shim() -> None:
     torchvision.io.read_video = _read_video
 
 
+# Beam width for CTC/attention decoding. The vendored config ships 40, but
+# measured output is byte-for-byte identical down to beam ~5 while decoding is
+# meaningfully cheaper — so we default to 10 (free speedup, no accuracy loss)
+# and expose an env override so it's tunable from the deploy without a rebuild.
+DEFAULT_BEAM_SIZE = 10
+
+
+def _beam_size() -> int:
+    raw = os.environ.get("LIPREADER_BEAM_SIZE", str(DEFAULT_BEAM_SIZE))
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return DEFAULT_BEAM_SIZE
+
+
 def _absolute_config() -> str:
-    """Rewrite the template config's relative checkpoint paths to absolute and
-    write it to a temp file (so the server is CWD-independent)."""
+    """Rewrite the template config's relative checkpoint paths to absolute, apply
+    the beam-size override, and write it to a temp file (CWD-independent)."""
     bench = VSR_DIR / "benchmarks"
     text = CONFIG_TEMPLATE.read_text().replace("benchmarks/", f"{bench}/")
+    text = re.sub(r"beam_size\s*=\s*\d+", f"beam_size={_beam_size()}", text)
     out = Path(tempfile.gettempdir()) / "lipreader_vsr_config.ini"
     out.write_text(text)
     return str(out)
