@@ -107,7 +107,20 @@ git push hf main
 
 ---
 
-## 8. Troubleshooting
+## 8. Configuration (environment variables)
+
+Set these under your Space's **Settings → Variables and secrets** (no rebuild
+needed — just restart the Space).
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `LIPREADER_BEAM_SIZE` | `10` | Decoding beam width. Lower = faster. Output is identical down to ~5 in testing; `1` (greedy) degrades. Raise toward `40` for marginal quality at higher latency. |
+| `LIPREADER_ALLOWED_ORIGINS` | local dev origins | Comma-separated CORS origins. Not needed for the default same-origin deploy; set only if you serve the SPA from a different host. |
+| `PORT` | `7860` | Port uvicorn binds. HF sets this; leave it alone unless self-hosting. |
+
+---
+
+## 9. Troubleshooting
 
 | Symptom                               | Likely cause / fix                                                                   |
 |---------------------------------------|--------------------------------------------------------------------------------------|
