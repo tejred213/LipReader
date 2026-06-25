@@ -156,12 +156,10 @@ export default function WebcamTab({ run, loading }: Props) {
               muted
               playsInline
               className="block w-full"
-              style={{ transform: "scaleX(-1)" }}
             />
             <canvas
               ref={canvasRef}
               className="pointer-events-none absolute inset-0 h-full w-full"
-              style={{ transform: "scaleX(-1)" }}
             />
 
             {/* Status pill */}
@@ -235,7 +233,6 @@ export default function WebcamTab({ run, loading }: Props) {
               src={clipUrl}
               controls
               className="w-full rounded-xl border border-slate-200/70 dark:border-white/10"
-              style={{ transform: "scaleX(-1)" }}
             />
             <motion.button
               whileHover={{ scale: 1.01 }}
