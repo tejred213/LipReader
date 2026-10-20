@@ -82,15 +82,21 @@ add a CNAME pointing at the Space URL with your DNS provider.
 
 ## 6. About sleep mode
 
-The free Space sleeps after **~30 minutes of inactivity**. The first visit
-after a sleep waits ~20–30 s for the container to wake (model load is fast
-because weights are already in the image — just `torch.load` time).
+The free `cpu-basic` Space pauses after **48 hours with no traffic** (this
+timer can't be changed on the free tier). The first visit after a pause waits
+~20–30 s for the container to wake (model load is fast because weights are
+already in the image — just `torch.load` time).
 
-To eliminate this:
+**Free fix (already set up):** [`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml)
+pings the Space every 12 hours from GitHub Actions, so the 48 h timer never
+runs out. Edit `SPACE_URL` in that file if you deploy under a different name.
+Run it once by hand from the repo's **Actions** tab to confirm it's green.
 
-- Upgrade hardware to a paid tier (cheapest is CPU upgrade ~$0.03 / hour).
-- Or use [HF "Always-on" Spaces](https://huggingface.co/docs/hub/spaces-overview#hardware)
-  feature (~$9 / month for permanent uptime).
+HF can still restart the container for its own maintenance; the next request
+then takes the same ~20–30 s cold start.
+
+**Paid alternative:** any upgraded hardware never sleeps by default, but it's
+billed hourly for as long as the Space is running.
 
 ---
 

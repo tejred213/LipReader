@@ -1,0 +1,37 @@
+# Keep the free Hugging Face Space awake.
+#
+# Free `cpu-basic` Spaces pause after 48 h with no traffic. A request every
+# 12 h keeps that timer from ever expiring (4 chances per window, so a delayed
+# or dropped GitHub cron run doesn't matter). Free for public repos.
+
+name: Keep HF Space awake
+
+on:
+  schedule:
+    - cron: "17 */12 * * *" # off the hour: top-of-hour crons get delayed most
+  workflow_dispatch:
+
+permissions:
+  actions: write # only for the re-enable step below
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SPACE_URL: https://tejas2106-lipreader.hf.space
+    steps:
+      # Hit the page a visitor would load, then the health check. If the Space
+      # was asleep, the first request wakes it; retries cover the boot window.
+      - name: Ping Space
+        run: |
+          curl -fsS -o /dev/null --max-time 60 --retry 6 --retry-delay 30 --retry-all-errors "$SPACE_URL/"
+          curl -fsS --max-time 60 --retry 6 --retry-delay 30 --retry-all-errors "$SPACE_URL/api/health"
+
+      # GitHub disables scheduled workflows in public repos after 60 days with
+      # no commits. Re-enabling via the API resets that clock, so this workflow
+      # keeps running even if the repo goes quiet.
+      - name: Keep this workflow enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/keep-alive.yml/enable"
